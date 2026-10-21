@@ -56,6 +56,7 @@ import os
 import socketserver
 import threading
 import time
+import hashlib      # [BARU] dipakai cetak_identitas untuk sidik jari (SHA-256) public key
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from cryptography.hazmat.primitives import serialization
@@ -152,6 +153,30 @@ def load_or_create_keys(author, data_dir):
         except OSError:
             pass
         print(f"[NODE] Key '{author}' dibuat & disimpan di {path}")
+
+
+# [BARU - Checkpoint 1] Mencetak identitas aktor saat node menyala: public key (dipotong),
+# sidik jari, dan keterangan bahwa private key hanya disimpan lokal. Hanya log.
+def cetak_identitas(author, data_dir):
+    """Checkpoint 1: tampilkan identitas (public key terpotong) dan lokasi private key lokal."""
+    _, pub = get_or_create_author(author)
+    pem = public_key_to_pem(pub)
+    isi = "".join(pem.strip().splitlines()[1:-1])           # buang header/footer PEM
+    sidik = hashlib.sha256(pem.encode("utf-8")).hexdigest()
+    print(f"[KEY] Identitas '{author}': public key={isi[:32]}...{isi[-8:]} (alamat/sidik jari={sidik[:16]})")
+    print(f"[KEY] Private key '{author}' disimpan LOKAL di {os.path.join(data_dir, 'keys', author + '.pem')} "
+          f"dan TIDAK dikirim ke jaringan; yang dibagikan ke peer hanya public key.")
+
+
+# [BARU - Checkpoint 2] Mencetak isi transaksi (sesuai domain), tx_id, dan potongan signature
+# RSA-PSS tepat setelah transaksi dibuat dan ditandatangani. Hanya log.
+def cetak_transaksi_dibuat(tx, isi):
+    """Checkpoint 2: isi transaksi (sesuai domain) dan potongan tanda tangan."""
+    sig = str(tx["signature"])
+    print(f"[TX] DIBUAT & DITANDATANGANI oleh {tx['sender']} | part_id={isi['part_id']} "
+          f"part_name={isi['part_name']!r} {isi['origin']}->{isi['destination']} "
+          f"vehicle={isi['vehicle_id']} status={isi['status']}")
+    print(f"[TX]   tx_id={tx['tx_id'][:16]}...  signature={sig[:24]}...{sig[-8:]} (RSA-PSS)")
 
 
 # ---------- penyimpanan (chain + pool) ----------
@@ -624,6 +649,7 @@ def handle_message(msg: dict, ledger, peers=None, owned_authors=None) -> dict:
             return {"type": "REJECT", "reason": f"node ini tidak memegang private key '{sender}'"}
         tx = make_transaction(sender, isi["part_id"], isi["part_name"], isi["origin"],
                               isi["destination"], isi["vehicle_id"], isi["status"])
+        cetak_transaksi_dibuat(tx, isi)        # [BARU - CP 2] jalur HTTP (kirim_contoh.py / serangan.py)
         status, alasan = ledger.add_to_pool(tx)
         if status != "NEW":
             return {"type": "REJECT", "reason": alasan}
@@ -725,6 +751,9 @@ def buat_transaksi_menu(ledger, peers, owned_authors):
         print("Semua field wajib diisi.")
         return
     tx = make_transaction(sender, part_id, part_name, origin, dest, veh, status)
+    # [BARU - CP 2] tampilkan isi transaksi dan signature (jalur menu 1)
+    cetak_transaksi_dibuat(tx, {"part_id": part_id, "part_name": part_name, "origin": origin,
+                                "destination": dest, "vehicle_id": veh, "status": status})
     hasil, alasan = ledger.add_to_pool(tx)
     if hasil == "NEW":
         broadcast_transaction(tx, peers, ledger, owned_authors)
@@ -739,6 +768,7 @@ def run_node(host, port, owned_authors, peers, data_dir):
 
     for author in owned_authors:
         load_or_create_keys(author, data_dir)
+        cetak_identitas(author, data_dir)      # [BARU - CP 1] tampilkan identitas aktor
 
     state_file = os.path.join(data_dir, "chain.json")    # di Docker: ikut volume ./data/nodeX
     muat_state(ledger, state_file)

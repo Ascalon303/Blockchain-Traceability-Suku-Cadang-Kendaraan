@@ -718,6 +718,12 @@ class Ledger:
                 raise PoolEmpty("pool kosong: tidak ada transaksi valid untuk ditambang")
             self.log("MINING", f"mulai block #{cand.index} ({len(cand.transactions)} transaksi) "
                                f"difficulty={difficulty!r}")
+            # [BARU - Checkpoint 5] Cetak isi block kandidat sebelum PoW dimulai: nilai
+            # previous_hash yang dipakai dan daftar transaksi yang diambil dari pool.
+            # Hanya log; tidak mengubah logika penambangan.
+            self.log("MINING", f"kandidat: previous_hash={cand.previous_hash[:16]}... transaksi di block:")
+            for t in cand.transactions:
+                self.log("MINING", f"   - {t['tx_id'][:12]} {t['sender']} {t['part_id']} -> {t['status']}")
             hasil, percobaan, detik = mine_with_retry(cand, difficulty)     # di luar lock
             if hasil is None:
                 raise ConsensusRejected("PoW gagal ditemukan")
@@ -733,6 +739,11 @@ class Ledger:
                 self.log("MINING", f"SELESAI block #{cand.index}: nonce={cand.nonce} "
                                    f"percobaan={percobaan:,} waktu={detik:.3f}s hash={cand.hash[:16]}...")
                 self._prune_pool()
+                # [BARU - Checkpoint 7, sisi penambang] Bukti block diterima rantai lokal:
+                # index block baru, panjang rantai bertambah, dan sisa pool (harus 0 bila
+                # semua transaksi pending ikut masuk block).
+                self.log("CHAIN", f"block #{cand.index} masuk rantai lokal; panjang rantai = "
+                                  f"{len(self.chain)} block (termasuk genesis), pool pending = {len(self.pool)}")
                 return cand, percobaan, detik
         raise ConsensusRejected("ujung rantai terus berubah saat menambang")
 
@@ -768,6 +779,10 @@ class Ledger:
             self.log("BLOCK", f"DITERIMA block #{blk.index} ({len(blk.transactions)} transaksi) "
                               f"hash={blk.hash[:16]}...")
             self._prune_pool()
+            # [BARU - Checkpoint 7, sisi penerima] Log yang sama untuk node yang menerima block
+            # dari peer, supaya penambahan panjang rantai dan pool kosong terlihat di node tujuan.
+            self.log("CHAIN", f"panjang rantai = {len(self.chain)} block (termasuk genesis), "
+                              f"pool pending = {len(self.pool)}")
             return "ADDED", ""
 
     # ---------- longest-chain rule ----------
@@ -1144,4 +1159,3 @@ if __name__ == "__main__":
 # =====================================================================
 # [AKHIR ARSIP]
 # =====================================================================
-
