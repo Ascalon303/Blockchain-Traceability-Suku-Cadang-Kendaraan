@@ -1,0 +1,17 @@
+data/
+data_*/
+chain.json*
+.env
+__pycache__/
+*.pyc
+.git
+.pytest_cache/
+*.zip
+*.bak
+*.tmp
+*.log
+venv/
+.venv/
+.vscode/
+.idea/
+arsip_versi_lama/

@@ -1,0 +1,33 @@
+# ---- Data runtime: berisi PRIVATE KEY aktor dan salinan chain -- JANGAN masuk repositori ----
+data/
+data_*/
+chain.json*
+.env
+# (.env.example sengaja TIDAK diabaikan: hanya contoh isi .env, aman dan perlu ikut repositori)
+
+# ---- Cache Python ----
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# ---- Berkas cadangan, sementara, log, dan arsip unduhan ----
+*.zip
+*.bak
+*.tmp
+*.log
+
+# ---- Lingkungan virtual Python ----
+venv/
+.venv/
+env/
+
+# ---- Editor dan sistem operasi ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---- Hasil eksperimen (OPSIONAL) ----
+# File CSV dari eksperimen_difficulty.py / eksperimen_tulis_ulang.py bisa jadi bukti laporan,
+# jadi TIDAK diabaikan secara bawaan. Hapus tanda # di bawah bila ingin menyembunyikannya.
+# hasil*.csv

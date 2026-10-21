@@ -1,0 +1,22 @@
+# LAPTOP 2 -- satu node dalam jaringan dua laptop.
+#   Pemegang aktor : Dealer + Bengkel
+#   Port           : 9002 (di-publish ke jaringan LAN laptop ini)
+#   Peer           : laptop 1, alamatnya diambil dari PEER_ADDR di berkas .env
+#
+# Cara pakai (di laptop 2):
+#   1) cp .env.example .env        lalu isi PEER_ADDR=<IP-laptop-1>:9001
+#   2) docker compose -f docker-compose.laptop2.yml up -d --build
+#   3) docker attach node-laptop2  (menu muncul; keluar tanpa menghentikan: Ctrl+P lalu Ctrl+Q)
+
+services:
+  node:
+    build: .
+    image: node-blockchain
+    container_name: node-laptop2
+    stdin_open: true
+    tty: true
+    command: ["--port", "9002",
+              "--authors", "Dealer", "Bengkel",
+              "--peers", "${PEER_ADDR:?isi PEER_ADDR di berkas .env, contoh 192.168.1.10:9001}"]
+    ports: ["9002:9002"]
+    volumes: ["./data/laptop2:/app/data_9002"]

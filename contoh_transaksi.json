@@ -1,0 +1,6 @@
+[
+  {"author": "Produsen",    "part_id": "SP-002", "part_name": "Filter Oli Honda Beat", "origin": "Produsen",    "destination": "Distributor", "vehicle_id": "VH-010", "status": "PRODUCED"},
+  {"author": "Distributor", "part_id": "SP-002", "part_name": "Filter Oli Honda Beat", "origin": "Produsen",    "destination": "Distributor", "vehicle_id": "VH-010", "status": "SHIPPED"},
+  {"author": "Dealer",      "part_id": "SP-002", "part_name": "Filter Oli Honda Beat", "origin": "Distributor", "destination": "Dealer",      "vehicle_id": "VH-010", "status": "RECEIVED"},
+  {"author": "Bengkel",     "part_id": "SP-002", "part_name": "Filter Oli Honda Beat", "origin": "Dealer",      "destination": "Bengkel",     "vehicle_id": "VH-010", "status": "INSTALLED"}
+]

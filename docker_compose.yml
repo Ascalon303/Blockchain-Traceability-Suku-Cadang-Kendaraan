@@ -1,0 +1,47 @@
+# 4 NODE, satu node untuk tiap aktor berwenang: Produsen, Distributor, Dealer, Bengkel
+# (Bagian 2 praktikum, checkpoint 7 dan 8).
+# stdin_open + tty WAJIB: node memakai menu interaktif (input()), tanpa ini
+# container langsung exit karena stdin tertutup.
+# Satu aktor hanya boleh dipegang SATU node (key berbeda akan ditolak peer).
+x-node: &node
+  build: .
+  stdin_open: true
+  tty: true
+  networks: [blockchain-net]
+
+services:
+  node1:
+    <<: *node
+    container_name: node1
+    command: ["--port","9001","--authors","Produsen",
+              "--peers","node2:9002","node3:9003","node4:9004"]
+    ports: ["9001:9001"]
+    volumes: ["./data/node1:/app/data_9001"]   # key + chain.json bertahan walau container dihapus
+
+  node2:
+    <<: *node
+    container_name: node2
+    command: ["--port","9002","--authors","Distributor",
+              "--peers","node1:9001","node3:9003","node4:9004"]
+    ports: ["9002:9002"]
+    volumes: ["./data/node2:/app/data_9002"]
+
+  node3:
+    <<: *node
+    container_name: node3
+    command: ["--port","9003","--authors","Dealer",
+              "--peers","node1:9001","node2:9002","node4:9004"]
+    ports: ["9003:9003"]
+    volumes: ["./data/node3:/app/data_9003"]
+
+  node4:
+    <<: *node
+    container_name: node4
+    command: ["--port","9004","--authors","Bengkel",
+              "--peers","node1:9001","node2:9002","node3:9003"]
+    ports: ["9004:9004"]
+    volumes: ["./data/node4:/app/data_9004"]
+
+networks:
+  blockchain-net:
+    driver: bridge

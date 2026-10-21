@@ -1,0 +1,26 @@
+# LAPTOP 1 -- satu node dalam jaringan dua laptop.
+#   Pemegang aktor : Produsen + Distributor
+#   Port           : 9001 (di-publish ke jaringan LAN laptop ini)
+#   Peer           : laptop 2, alamatnya diambil dari PEER_ADDR di berkas .env
+#
+# Cara pakai (di laptop 1):
+#   1) cp .env.example .env        lalu isi PEER_ADDR=<IP-laptop-2>:9002
+#   2) docker compose -f docker-compose.laptop1.yml up -d --build
+#   3) docker attach node-laptop1  (menu muncul; keluar tanpa menghentikan: Ctrl+P lalu Ctrl+Q)
+#
+# stdin_open + tty WAJIB: node memakai menu interaktif (input()); tanpa ini container langsung exit.
+# Satu aktor hanya boleh dipegang SATU node (key berbeda akan ditolak peer),
+# jadi laptop 2 harus memegang aktor yang berbeda (lihat docker-compose.laptop2.yml).
+
+services:
+  node:
+    build: .
+    image: node-blockchain
+    container_name: node-laptop1
+    stdin_open: true
+    tty: true
+    command: ["--port", "9001",
+              "--authors", "Produsen", "Distributor",
+              "--peers", "${PEER_ADDR:?isi PEER_ADDR di berkas .env, contoh 192.168.1.11:9002}"]
+    ports: ["9001:9001"]
+    volumes: ["./data/laptop1:/app/data_9001"]   # key + chain.json bertahan walau container dihapus
